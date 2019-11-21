@@ -1,0 +1,11 @@
+{
+  "name": "hapi-contacts",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "hapi": "^18.1.0",
+    "inert": "^5.1.3",
+    "pusher": "^3.0.0"
+  }
+}

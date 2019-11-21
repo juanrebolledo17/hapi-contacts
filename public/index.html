@@ -1,0 +1,129 @@
+<html>
+   <head>
+       <meta name="viewport" content="width=device-width, initial-scale=1">
+       <title>Hapi.js Realtime Application!</title>
+       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.6.2/css/bulma.min.css">
+   </head>
+   <body>
+       <section class="section">
+           <div class="container">
+               <div class="intro">
+                   <h1 class="title">Hello</h1>
+                   <p class="subtitle">
+                       Welcome to <strong class="has-text-primary">HapiContacts</strong>!
+                   </p>
+               </div>
+               <hr>
+               <section class="columns">
+                   <div class="column is-two-fifths">
+                       <h4 class="title is-3">
+                           Add Contact
+                       </h4>
+                       <form id="addContactForm">
+                           <div class="field">
+                               <label class="label">Name</label>
+                               <div class="control">
+                                   <input name="name" required class="input" type="text" placeholder="e.g Alex Smith">
+                               </div>
+                           </div>
+                           <div class="field">
+                               <label class="label">Phone Number</label>
+                               <div class="control">
+                                   <input name="phone" required class="input" type="text" placeholder="e.g. 234-80-988-7676">
+                               </div>
+                           </div>
+                           <div class="field">
+                               <label class="label">Address</label>
+                               <div class="control">
+                                   <textarea name="address" required class="textarea" placeholder="Glover road"></textarea>
+                               </div>
+                           </div>
+                           <div class="field">
+                               <div class="control">
+                                   <button class="button is-primary">Save</button>
+                               </div>
+                           </div>
+                       </form>
+                   </div>
+                   <div class="column">
+                       <h4 class="title is-3">
+                           Contacts
+                       </h4>
+                       <div id="contacts-list" class="columns is-multiline"></div>
+                   </div>
+               </section>
+           </div>
+       </section>
+
+
+       <script src="https://js.pusher.com/4.0/pusher.min.js"></script>
+       <script>
+          const form = document.querySelector('#addContactForm');
+          const pusher = new Pusher('APP_KEY', {
+            cluster: 'APP_CLUSTER',
+            encrypted: true
+          });
+          const channel = pusher.subscribe('contact');
+
+          channel.bind('contact-added', ({ contact }) => {
+            appendToList(contact)
+          });
+
+          channel.bind('contact-deleted', ({ id }) => {
+            const contact = document.querySelector(`#${id}`);
+            contact.parentNode.removeChild(contact);
+          });
+
+          // helper function that appends new posts
+          // to the list of blog posts on the page
+          const appendToList = data => {
+          const html = `
+            <div class="column is-half" id="${data.id}">
+              <div class="card">
+                <div class="card-content">
+                  <div class="media">
+                    <div class="media-left">
+                      <figure class="image is-48x48"><img src="${data.image}"></figure>
+                    </div>
+                    <div class="media-content">
+                      <p class="title is-4">${data.name}</p>
+                      <p class="subtitle is-6">${data.phone}</p>
+                    </div>
+                  </div>
+                  <div class="content"><p>${data.address}</p></div>
+                </div>
+                <footer class="card-footer">
+                  <a onclick="deleteContact('${data.id}')" href="#" class="card-footer-item has-text-danger">
+                    Delete
+                  </a>
+                </footer>
+              </div>
+            </div>`;
+            const list = document.querySelector("#contacts-list");
+            list.innerHTML += html;
+          };
+
+          form.onsubmit = e => {
+            e.preventDefault()
+            const contact = {
+              name: form.elements['name'].value,
+              phone: form.elements['phone'].value,
+              address: form.elements['address'].value
+            }
+            fetch('/contact', {
+              method: 'POST',
+              body: JSON.stringify({ contact })
+            })
+            .then(response => response.json())
+            .then(response => form.rest())
+            .catch(error => console.error('Error:', error))
+          };
+
+          const deleteContact = id => {
+            fetch(`/contact/${id}`, { method: 'DELETE' })
+            .catch(error => console.error('Error:', error));
+          };
+
+       </script>
+   </body>
+   </html>
